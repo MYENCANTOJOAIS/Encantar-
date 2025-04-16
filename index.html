@@ -1,0 +1,143 @@
+
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Roleta de Prêmios</title>
+<style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    #formContainer {
+      max-width: 300px;
+      margin: 0 auto;
+    }
+    input {
+      width: 90%;
+      padding: 10px;
+      margin: 5px 0;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #ffc107;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    #wheelCanvas {
+      margin-top: 20px;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+  
+body {
+    background-image: url('https://cdn.pixabay.com/photo/2016/03/05/19/02/sunflower-1233926_1280.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+</style>
+</head>
+<body>
+<div id="formContainer">
+<h2>Cadastre-se para girar a roleta!</h2>
+<input id="name" placeholder="Seu nome" required="" type="text"/>
+<input id="phone" placeholder="Seu telefone" required="" type="tel"/>
+<button onclick="start()">Participar</button>
+<p id="formMsg" style="color: red;"></p>
+</div>
+<canvas height="300" id="wheelCanvas" style="display: none;" width="300"></canvas>
+<div id="result"></div>
+<script>
+    const prizes = ["5% OFF", "10% OFF", "Frete Grátis"];
+    let isSpinning = false;
+
+    function start() {
+      const name = document.getElementById("name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const msg = document.getElementById("formMsg");
+
+      if (!name || !phone) {
+        msg.textContent = "Preencha todos os campos.";
+        return;
+      }
+
+      if (localStorage.getItem("spin_" + phone)) {
+        msg.textContent = "Você já participou!";
+        return;
+      }
+
+      msg.textContent = "";
+      localStorage.setItem("spin_" + phone, "true");
+      document.getElementById("formContainer").style.display = "none";
+      document.getElementById("wheelCanvas").style.display = "block";
+      drawWheel();
+    }
+
+    function drawWheel() {
+      const canvas = document.getElementById("wheelCanvas");
+      const ctx = canvas.getContext("2d");
+      const numPrizes = prizes.length;
+      const arcSize = (2 * Math.PI) / numPrizes;
+      const colors = ["#FFCDD2", "#C8E6C9", "#BBDEFB"];
+      let angle = 0;
+
+      for (let i = 0; i < numPrizes; i++) {
+        ctx.beginPath();
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.moveTo(150, 150);
+        ctx.arc(150, 150, 150, angle, angle + arcSize);
+        ctx.lineTo(150, 150);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(150, 150);
+        ctx.rotate(angle + arcSize / 2);
+        ctx.fillStyle = "#000";
+        ctx.font = "16px Arial";
+        ctx.fillText(prizes[i], 50, 10);
+        ctx.restore();
+
+        angle += arcSize;
+      }
+
+      spinWheel();
+    }
+
+    function spinWheel() {
+      const resultDiv = document.getElementById("result");
+      const canvas = document.getElementById("wheelCanvas");
+      let deg = 0;
+      let speed = Math.random() * 20 + 20;
+      const stopAngle = Math.floor(Math.random() * 360);
+      const stopAt = Date.now() + 4000;
+
+      const interval = setInterval(() => {
+        deg += speed;
+        speed *= 0.98;
+        canvas.style.transform = "rotate(" + deg + "deg)";
+
+        if (Date.now() >= stopAt || speed < 0.5) {
+          clearInterval(interval);
+          const prizeIndex = Math.floor(((360 - (deg % 360)) % 360) / (360 / prizes.length));
+          const prize = prizes[prizeIndex];
+          resultDiv.innerHTML = `<p>Parabéns! Você ganhou: <strong>${prize}</strong></p>
+          <a href="https://wa.me/5511913610324?text=Ganhei%20${encodeURIComponent(prize)}%20na%20roleta%20da%20My%20Encanto%20Joias!" target="_blank">
+            <button>Usar no WhatsApp</button>
+          </a>`;
+        }
+      }, 30);
+    }
+  </script>
+</body>
+</html>
